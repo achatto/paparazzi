@@ -1,6 +1,6 @@
 <!DOCTYPE module SYSTEM "module.dtd">
 
-<module name="jevois" dir="computer_vision">
+<module name="jevois" dir="sensors/cameras">
   <doc>
     <description>
       Decoder for standardized messages from the JEVOIS smart camera (http://jevois.org)
@@ -13,8 +13,8 @@
   <settings>
     <dl_settings>
       <dl_settings NAME="JeVois">
-        <dl_setting MAX="20" MIN="0" STEP="1" VAR="jevois_mapping_setting" shortname="mapping" module="modules/computer_vision/jevois" handler="setmapping"/>
-        <dl_setting MAX="1" MIN="0" STEP="1" VAR="jevois_stream_setting" shortname="stream" module="modules/computer_vision/jevois" handler="stream" values="FALSE|TRUE"/>
+        <dl_setting MAX="20" MIN="0" STEP="1" VAR="jevois_mapping_setting" shortname="mapping" module="modules/sensors/cameras/jevois" handler="setmapping"/>
+        <dl_setting MAX="1" MIN="0" STEP="1" VAR="jevois_stream_setting" shortname="stream" module="modules/sensors/cameras/jevois" handler="stream" values="FALSE|TRUE"/>
       </dl_settings>
     </dl_settings>
   </settings>

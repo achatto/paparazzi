@@ -18,12 +18,12 @@
  * <http://www.gnu.org/licenses/>.
  */
 /**
- * @file "modules/computer_vision/jevois.c"
+ * @file "modules/sensors/cameras/jevois.c"
  * @author Gautier Hattenberger
  * Decoder for standardized messages from the JEVOIS smart camera (http://jevois.org)
  */
 
-#include "modules/computer_vision/jevois.h"
+#include "modules/sensors/cameras/jevois.h"
 
 #include "std.h"
 #include "mcu_periph/uart.h"
@@ -89,7 +89,18 @@ void jevois_init(void)
   memset(jevois.buf, 0, JEVOIS_MAX_LEN);
 }
 
-// parsing function
+// send specific message if requested
+static void jevois_send_message(void)
+{
+#if JEVOIS_SEND_FOLLOW_ME
+  float cam_heading = (JEVOIS_HFOV / (2.f * JEVOIS_NORM)) * (float)(jevois.msg.coord[0]);
+  float cam_height = (JEVOIS_VFOV / (2.f * JEVOIS_NORM)) * (float)(jevois.msg.coord[1]);
+  // send a FOLLOW_ME message in camera frame
+  AbiSendMsgFOLLOW_ME(CV_JEVOIS_ID, 0, 0, cam_heading, cam_height, 0.f);
+#endif
+}
+
+// raw message parsing function
 static void jevois_parse(struct jevois_t *jv, char c)
 {
   switch (jv->state) {
@@ -295,6 +306,8 @@ static void jevois_parse(struct jevois_t *jv, char c)
           jv->msg.dim,
           jv->msg.quat,
           jv->msg.extra);
+      // also send specific messages if needed
+      jevois_send_message();
       jv->state = JV_SYNC;
       break;
     default:

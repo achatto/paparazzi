@@ -18,7 +18,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 /**
- * @file "modules/computer_vision/jevois.h"
+ * @file "modules/sensors/cameras/jevois.h"
  * @author Gautier Hattenberger
  * Decoder for standardized messages from the JEVOIS smart camera (http://jevois.org)
  */
@@ -43,6 +43,21 @@
 
 /** Normalized data from JEVOIS are between -1000 and 1000 */
 #define JEVOIS_NORM 1000
+
+/** Camera horizontal FOV
+ * From datasheet it should be 65deg,
+ * but it seems that better results are acheived with 45
+ */
+#ifndef JEVOIS_HFOV
+#define JEVOIS_HFOV RadOfDeg(45)
+#endif
+
+/** Camera vertical FOV
+ * Camera has a 4/3 ratio
+ */
+#ifndef JEVOIS_VFOV
+#define JEVOIS_VFOV (3*JEVOIS_HFOV/4)
+#endif
 
 extern void jevois_init(void);
 extern void jevois_event(void);
