@@ -363,11 +363,11 @@
 #endif
 
 /*
- * ID's for computer vision systems
+ * ID's for camera type sensors
  */
 
-#ifndef CV_JEVOIS_ID
-#define CV_JEVOIS_ID 1
+#ifndef CAM_JEVOIS_ID
+#define CAM_JEVOIS_ID 1
 #endif
 
 

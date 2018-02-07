@@ -92,11 +92,11 @@ void jevois_init(void)
 // send specific message if requested
 static void jevois_send_message(void)
 {
-#if JEVOIS_SEND_FOLLOW_ME
+#if JEVOIS_SEND_FOLLOW_TARGET
   float cam_heading = (JEVOIS_HFOV / (2.f * JEVOIS_NORM)) * (float)(jevois.msg.coord[0]);
   float cam_height = (JEVOIS_VFOV / (2.f * JEVOIS_NORM)) * (float)(jevois.msg.coord[1]);
-  // send a FOLLOW_ME message in camera frame
-  AbiSendMsgFOLLOW_ME(CV_JEVOIS_ID, 0, 0, cam_heading, cam_height, 0.f);
+  // send a FOLLOW_TARGET message in camera frame
+  AbiSendMsgFOLLOW_TARGET(CAM_JEVOIS_ID, 0, 0, cam_heading, cam_height, 0.f);
 #endif
 }
 
@@ -298,7 +298,7 @@ static void jevois_parse(struct jevois_t *jv, char c)
       break;
     case JV_SEND_MSG:
       // send ABI message
-      AbiSendMsgJEVOIS_MSG(CV_JEVOIS_ID,
+      AbiSendMsgJEVOIS_MSG(CAM_JEVOIS_ID,
           jv->msg.type,
           jv->msg.id,
           jv->msg.nb,

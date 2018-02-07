@@ -138,10 +138,15 @@
       <field name="extra" type="char *">Additional text information</field>
     </message>
 
-    <message name="FOLLOW_ME" id="22">
+    <message name="FOLLOW_TARGET" id="22">
       <field name="id" type="uint32_t">Object ID to track</field>
-      <field name="frame" type="uint8_t">0: relative to camera frame, 1: global coordinates</field>
-      <field name="heading" type="float" unit="rad">Direction of object to track</field>
+      <field name="frame" type="uint8_t">
+        bitmask to select relative coordinates (0) or global coordinates (1)
+        bit 0: bearing
+        bit 1: height
+        bit 2: distance
+      </field>
+      <field name="bearing" type="float" unit="rad">Direction of object to track</field>
       <field name="height" type="float" unit="m">Height of object to track</field>
       <field name="distance" type="float" unit="m">Distance of object to track</field>
     </message>
