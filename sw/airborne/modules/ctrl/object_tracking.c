@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Gautier Hattenberger <gautier.hattenberger@enac.fr>
+ * Copyright (C) 2018 Gautier Hattenberger <gautier.hattenberger@enac.fr>
  *
  * This file is part of paparazzi
  *
@@ -40,11 +40,6 @@
 #define OBJECT_TRACKING_TIMEOUT 3.0f
 #endif
 
-// Deadband (constant heading setpoint)
-#ifndef OBJECT_TRACKING_DEADBAND
-#define OBJECT_TRACKING_DEADBAND RadOfDeg(5)
-#endif
-
 // Turn rate in tracking mode (rad/s)
 #ifndef OBJECT_TRACKING_RATE
 #define OBJECT_TRACKING_RATE RadOfDeg(10)
@@ -55,14 +50,9 @@
 #define OBJECT_TRACKING_SEARCH_RATE RadOfDeg(20)
 #endif
 
-// Select rate or heading tracking mode
-#ifndef OBJECT_TRACKING_USE_RATE
-#define OBJECT_TRACKING_USE_RATE FALSE
-#endif
-
 // Send debug message
 #ifndef OBJECT_TRACKING_DEBUG
-#define OBJECT_TRACKING_DEBUG TRUE
+#define OBJECT_TRACKING_DEBUG FALSE
 #endif
 
 #if OBJECT_TRACKING_DEBUG
@@ -71,75 +61,53 @@
 #include "mcu_periph/uart.h"
 #endif
 
-int16_t object_tracking_deadband;
-float object_tracking_rate;
-float object_tracking_search_rate;
+float object_tracking_rate; // in rad/s
+float object_tracking_search_rate; // in rad/s
 
-float object_lat;
-float object_vert;
-float timeout;
+static uint8_t object_frame; // relative or global coordinates
+static float object_bearing;
+static float object_height;
+static float timeout;
 
 abi_event object_ev;
 
-static const float nav_dt = 1. / NAV_FREQ;
+static const float nav_dt = 1.f / NAV_FREQ;
 
-// callback on follow me message
+// callback on follow target message
 static void get_object(uint8_t sender_id __attribute__((unused)),
     uint32_t id __attribute__((unused)),
-    uint8_t frame __attribute__((unused)),
-    float heading, float height,
+    uint8_t frame, float bearing, float height,
     float distance __attribute__((unused)))
 {
-  object_lat = heading;
-  object_vert = height;
+  object_frame = frame;
+  object_bearing = bearing;
+  object_height = height;
   timeout = 0.f;
 }
 
 void object_tracking_init(void)
 {
-  object_tracking_deadband = OBJECT_TRACKING_DEADBAND;
   object_tracking_search_rate = OBJECT_TRACKING_SEARCH_RATE;
   object_tracking_rate = OBJECT_TRACKING_RATE;
 
-  object_lat = 0.f;
-  object_vert = 0.f;
+  object_frame = 0; // relative coordinates
+  object_bearing = 0.f;
+  object_height = 0.f;
   timeout = OBJECT_TRACKING_TIMEOUT; // start in search mode
 
   // Bind to camera message
-  AbiBindMsgFOLLOW_ME(OBJECT_TRACKING_ID, &object_ev, get_object);
+  AbiBindMsgFOLLOW_TARGET(OBJECT_TRACKING_ID, &object_ev, get_object);
 }
 
 void object_tracking_run(void)
 {
-#if OBJECT_TRACKING_USE_RATE
-  float rate = object_tracking_search_rate; // search mode
-  if (timeout < OBJECT_TRACKING_TIMEOUT) {
-    timeout += nav_dt;
-    if (object_lat > object_tracking_deadband) {
-      rate = object_tracking_rate;
-    } else if (object_lat < -object_tracking_deadband) {
-      rate = -object_tracking_rate;
-    } else {
-      rate = 0.f;
-    }
-#if OBJECT_TRACKING_DEBUG
-    float msg[] = {
-      rate,
-      object_lat,
-      object_vert,
-      timeout
-    };
-    DOWNLINK_SEND_PAYLOAD_FLOAT(DefaultChannel, DefaultDevice, 4, msg);
-#endif
-  }
-  nav_heading += ANGLE_BFP_OF_REAL(rate * nav_dt);
-
-#else // use calculated heading
-
   if (timeout < OBJECT_TRACKING_TIMEOUT) {
     timeout += nav_dt;
     // compute expected heading
-    float target_heading = stateGetNedToBodyEulers_f()->psi + object_lat;
+    float target_heading = object_bearing;
+    if (!bit_is_set(object_frame, 0)) {
+      target_heading += stateGetNedToBodyEulers_f()->psi; // relative frame
+    }
     float diff = target_heading - ANGLE_FLOAT_OF_BFP(nav_heading);
     FLOAT_ANGLE_NORMALIZE(diff);
     BoundAbs(diff, object_tracking_rate * nav_dt)
@@ -147,8 +115,8 @@ void object_tracking_run(void)
 #if OBJECT_TRACKING_DEBUG
     float msg[] = {
       target_heading,
-      object_lat,
-      object_vert,
+      object_bearing,
+      object_height,
       timeout
     };
     DOWNLINK_SEND_PAYLOAD_FLOAT(DefaultChannel, DefaultDevice, 4, msg);
@@ -156,6 +124,6 @@ void object_tracking_run(void)
   } else {
     nav_heading += ANGLE_BFP_OF_REAL(object_tracking_search_rate * nav_dt);
   }
-#endif
+  INT32_COURSE_NORMALIZE(nav_heading);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Gautier Hattenberger <gautier.hattenberger@enac.fr>
+ * Copyright (C) 2018 Gautier Hattenberger <gautier.hattenberger@enac.fr>
  *
  * This file is part of paparazzi
  *
@@ -28,11 +28,28 @@
 
 #include "std.h"
 
-extern int16_t object_tracking_deadband;
-extern float object_tracking_search_rate;
+/** max turn rate in control mode in rad/s
+ */
 extern float object_tracking_rate;
 
+/** max turn rate in search mode in rad/s
+ */
+extern float object_tracking_search_rate;
+
+/** init function
+ */
 extern void object_tracking_init(void);
+
+/** run function
+ *
+ * should be called in a flight plan stay block using pre_call
+ *
+ * ex:
+ *  <block name="Track Object">
+ *    <stay wp="STDBY" pre_call="object_tracking_run()"/>
+ *  </block>
+ *
+ */
 extern void object_tracking_run(void);
 
 #endif
